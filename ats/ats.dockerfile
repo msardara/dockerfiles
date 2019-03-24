@@ -16,11 +16,42 @@ RUN apt-get install -y libparc-dev vpp-lib vpp-dev libasio-dev --no-install-reco
 ENV HICN_PATSHOME="/hicn-stack"
 COPY ./etc /tmp/etc
 
-# Build ATS
-#RUN rm -r /etc/trafficserver
-COPY etc/trafficserver/*.config /etc/trafficserver/
-#COPY etc/trafficserver/cache.conf /etc/trafficserver/cache.conf
-#run cp /tmp/etc/trafficserver /etc/trafficserver
+# Configure ATS
+ENV ATS_CACHE="https://raw.githubusercontent.com/msardara/dockerfiles/master/ats/etc/trafficserver/cache.config"
+ENV ATS_CONGESTION="https://raw.githubusercontent.com/msardara/dockerfiles/master/ats/etc/trafficserver/congestion.config"
+ENV ATS_HOSTING="https://raw.githubusercontent.com/msardara/dockerfiles/master/ats/etc/trafficserver/hosting.config"
+ENV ATS_IPALLOW="https://raw.githubusercontent.com/msardara/dockerfiles/master/ats/etc/trafficserver/ip_allow.config"
+ENV ATS_LOGHOSTS="https://raw.githubusercontent.com/msardara/dockerfiles/master/ats/etc/trafficserver/log_hosts.config"
+ENV ATS_LOGGING="https://raw.githubusercontent.com/msardara/dockerfiles/master/ats/etc/trafficserver/logging.config"
+ENV ATS_METRICS="https://raw.githubusercontent.com/msardara/dockerfiles/master/ats/etc/trafficserver/metrics.config"
+ENV ATS_PARENT="https://raw.githubusercontent.com/msardara/dockerfiles/master/ats/etc/trafficserver/parent.config"
+ENV ATS_PLUGIN="https://raw.githubusercontent.com/msardara/dockerfiles/master/ats/etc/trafficserver/plugin.config"
+ENV ATS_RECORDS="https://raw.githubusercontent.com/msardara/dockerfiles/master/ats/etc/trafficserver/records.config"
+ENV ATS_REMAP="https://raw.githubusercontent.com/msardara/dockerfiles/master/ats/etc/trafficserver/remap.config"
+ENV ATS_SOCKS="https://raw.githubusercontent.com/msardara/dockerfiles/master/ats/etc/trafficserver/socks.config"
+ENV ATS_SPLITDNS="https://raw.githubusercontent.com/msardara/dockerfiles/master/ats/etc/trafficserver/splitdns.config"
+ENV ATS_SSLMULTI="https://raw.githubusercontent.com/msardara/dockerfiles/master/ats/etc/trafficserver/ssl_multicert.config"
+ENV ATS_SERVNAME="https://raw.githubusercontent.com/msardara/dockerfiles/master/ats/etc/trafficserver/ssl_server_name.config"
+ENV ATS_STORAGE="https://raw.githubusercontent.com/msardara/dockerfiles/master/ats/etc/trafficserver/storage.config"
+ENV ATS_VOLUME="https://raw.githubusercontent.com/msardara/dockerfiles/master/ats/etc/trafficserver/records.config"
+
+RUN curl ${ATS_CACHE} -o /etc/trafficserver/cache.config
+RUN curl ${ATS_CONGESTION} -o /etc/trafficserver/congestion.config
+RUN curl ${ATS_HOSTING} -o /etc/trafficserver/hosting.config
+RUN curl ${ATS_IPALLOW} -o /etc/trafficserver/ip_allow.config
+RUN curl ${ATS_LOGHOSTS} -o /etc/trafficserver/log_hosts.config
+RUN curl ${ATS_LOGGING} -o /etc/trafficserver/logging.config
+RUN curl ${ATS_METRICS} -o /etc/trafficserver/metrics.config
+RUN curl ${ATS_PARENT} -o /etc/trafficserver/parent.config
+RUN curl ${ATS_PLUGIN} -o /etc/trafficserver/plugin.config
+RUN curl ${ATS_RECORDS} -o /etc/trafficserver/records.config
+RUN curl ${ATS_REMAP} -o /etc/trafficserver/remap.config
+RUN curl ${ATS_SOCKS} -o /etc/trafficserver/socks.config
+RUN curl ${ATS_SPLITDNS} -o /etc/trafficserver/splitdns.config
+RUN curl ${ATS_SSLMULTI} -o /etc/trafficserver/ssl_multicert.config
+RUN curl ${ATS_SERVNAME} -o /etc/trafficserver/ssl_server_name.config
+RUN curl ${ATS_STORAGE} -o /etc/trafficserver/storage.config
+RUN curl ${ATS_VOLUME} -o /etc/trafficserver/records.config
 
 # Build hicn stack
 RUN mkdir -p ${HICN_PATSHOME}
@@ -33,12 +64,6 @@ WORKDIR /tmp/build
 RUN bash -c "cmake ${HICN_PATSHOME}/hicn -DBUILD_APPS=ON -DBUILD_HICNPLUGIN=ON -DCMAKE_INSTALL_PREFIX=/usr"
 RUN make -j install
 
-#COPY run_ats.sh /
-
-#CMD /etc/init.d/trafficserver start
-#CMD ["traffic_server", "-M", "--httpport", "8080:fd=7"]
-#CMD nohup hicn-http-proxy -a 127.0.0.1 -p 8081 -c 50000 http://webserver &
-
 RUN DUMP_INIT_URI=$(curl -L https://github.com/Yelp/dumb-init/releases/latest | grep -Po '(?<=href=")[^"]+_amd64(?=")') \
  && curl -Lo /usr/local/bin/dumb-init "https://github.com/$DUMP_INIT_URI" \
  && chmod +x /usr/local/bin/dumb-init \
@@ -48,7 +73,7 @@ RUN DUMP_INIT_URI=$(curl -L https://github.com/Yelp/dumb-init/releases/latest | 
 RUN mkdir /var/run/trafficserver
 RUN chown -R trafficserver:trafficserver /var/run/trafficserver
 
-COPY run_ats.sh /run_ats.sh
+RUN curl https://raw.githubusercontent.com/msardara/dockerfiles/master/ats/run_ats.sh -o /run_ats.sh
 RUN chmod +x /run_ats.sh
 
 ENTRYPOINT ["dumb-init"]
