@@ -1,0 +1,51 @@
+# ATS Dockerfile
+FROM ubuntu:18.04
+MAINTAINER Mauro Sardara "msardara@cisco.com"
+
+# Install Dependencies
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update
+RUN apt-get install -y git
+RUN apt-get install -y build-essential apt-utils
+RUN apt-get install -y libgmp-dev		\
+    	    	       libgc-dev 		\
+		       libjson-c-dev		\
+		       libcurl4-openssl-dev	\
+		       wget			\
+		       autoconf			\
+		       libtool			\
+		       libssl-dev		\
+		       tcl-dev			\
+		       libpcre3-dev
+
+run cd /
+RUN wget https://github.com/apache/trafficserver/archive/8.0.3.tar.gz
+RUN tar -xf 8.0.3.tar.gz
+#cd trafficserver-8.0.3
+#RUN git clone https://github.com/apache/trafficserver.git ats && cd ats && ls
+#RUN git checkout 8.0.3
+
+# Setup Environment Variables
+ENV ATS_PATSHOME="/trafficserver-8.0.3"
+ENV ATS_INSTALL="/opt/ts"
+ENV HICN_PATSHOME="/hicn"
+#ENV PATSHOMECONTRIB="/MyATS/ATS2-Contrib"
+#ENV PATH="/MyATS/ATS2/bin:${PATH}"
+COPY etc /root/
+
+# Build ATS
+RUN (cd ${ATS_PATSHOME} && autoreconf -if && ./configure --prefix=${ATS_INSTALL} && make -j 8 && make install)
+RUN rm -r /opt/ts/etc
+COPY /root/etc /opt/ts/
+
+# Run ATS
+RUN ${ATS_INSTALL}/bin/trafficserver start
+
+# Build hicn stack
+RUN cd ${HICN_PATSHOME}
+RUN git clone https://github.com/FDio/hicn.git
+RUN mkdir build && cd build
+RUN cmake ../hicn/ -DBUILD_APPS=ON -DBUILD_HICNPLUGIN=ON -DCMAKE_INSTALL_PREFIX=/usr
+RUN make install
+
+RUN hicn-http-proxy -a 127.0.0.1 -p 80 -c 50000 http://webserver

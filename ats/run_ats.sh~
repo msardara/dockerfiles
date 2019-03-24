@@ -1,0 +1,6 @@
+#!/bin/bash
+
+traffic_cop --stdout &
+# Herer we should run the ATS hICN proxy
+
+return 0
