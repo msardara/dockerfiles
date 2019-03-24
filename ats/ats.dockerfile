@@ -14,7 +14,6 @@ RUN curl -s https://packagecloud.io/install/repositories/fdio/release/script.deb
 RUN apt-get install -y libparc-dev vpp-lib vpp-dev libasio-dev --no-install-recommends python-ply
 
 ENV HICN_PATSHOME="/hicn-stack"
-COPY ./etc /tmp/etc
 
 # Configure ATS
 ENV ATS_CACHE="https://raw.githubusercontent.com/msardara/dockerfiles/master/ats/etc/trafficserver/cache.config"
