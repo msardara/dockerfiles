@@ -61,7 +61,7 @@ RUN mkdir build && cd build
 WORKDIR /tmp/build
 
 RUN bash -c "cmake ${HICN_PATSHOME}/hicn -DBUILD_APPS=ON -DBUILD_HICNPLUGIN=ON -DCMAKE_INSTALL_PREFIX=/usr"
-RUN make -j install
+RUN make -j 4 install
 
 RUN DUMP_INIT_URI=$(curl -L https://github.com/Yelp/dumb-init/releases/latest | grep -Po '(?<=href=")[^"]+_amd64(?=")') \
  && curl -Lo /usr/local/bin/dumb-init "https://github.com/$DUMP_INIT_URI" \
